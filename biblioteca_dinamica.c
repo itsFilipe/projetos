@@ -2,6 +2,9 @@
 #include <string.h>
 #include <stdlib.h>
 
+/*agora quero funcao para buscar por nome do livro, depois criar arquivo, depois disso tudo vou separar
+em livraria de codigos para deixar mais organizado, e também quero verificar todos possiveis erros*/
+
 #define DISPONIVEL 1
 #define EMPRESTADO 0
 
@@ -37,7 +40,8 @@ void adicionar_livro(Biblioteca *b);
 void print_livro(Livro *livro);
 int inicializar_biblioteca(Biblioteca *b);
 int tem_livros_cadastrados(Biblioteca *b);
-Livro* buscar_por_id(Biblioteca *b, int id);
+Livro *buscar_por_id(Biblioteca *b, int id);
+Livro *buscar_por_titulo(Biblioteca *b);
 int emprestar_livro(Biblioteca *b, int id);
 int devolver_livro(Biblioteca *b, int id);
 int digitar_id();
@@ -48,6 +52,8 @@ void finalizar_biblioteca(Biblioteca *b);
 int main()
 {   
     Biblioteca minha_biblioteca;
+    Livro *livro_encontrado = NULL;
+
     if(inicializar_biblioteca(&minha_biblioteca) == SUCESSO)
     {
         printf("Biblioteca inicializada!\n");
@@ -61,7 +67,7 @@ int main()
     char buffer[100];
     int opcao = 0;
 
-    while (opcao != 7)
+    while (opcao != 8)
     {
         imprimir_menu();
 
@@ -89,7 +95,7 @@ int main()
             if (!tem_livros_cadastrados(&minha_biblioteca))
                 break;
 
-            Livro *livro_encontrado = buscar_por_id(&minha_biblioteca, digitar_id());
+            livro_encontrado = buscar_por_id(&minha_biblioteca, digitar_id());
 
             if(livro_encontrado == NULL)
             {
@@ -100,9 +106,27 @@ int main()
                 printf("Livro encontrado!\n");
                 print_livro(livro_encontrado);
             }
+
             break;
 
-        case 4: //emprestar livro
+        case 4: //buscar por nome do livro
+            if (!tem_livros_cadastrados(&minha_biblioteca))
+                break;
+
+            livro_encontrado = buscar_por_titulo(&minha_biblioteca);
+
+            if(livro_encontrado == NULL)
+            {
+                printf("Livro nao encontrado.\n");
+            }
+            else
+            {
+                printf("Livro encontrado!\n");
+                print_livro(livro_encontrado);
+            }
+            break;
+
+        case 5: //emprestar livro
             if (!tem_livros_cadastrados(&minha_biblioteca))
                 break;
 
@@ -110,7 +134,7 @@ int main()
             emprestar_livro(&minha_biblioteca, id_emprestar);
             break;
 
-        case 5: //devolver livro
+        case 6: //devolver livro
             if (!tem_livros_cadastrados(&minha_biblioteca))
                 break;
 
@@ -118,19 +142,16 @@ int main()
             devolver_livro(&minha_biblioteca, id_devolver);
             break;
 
-        case 6: //remover livro
+        case 7: //remover livro
             if (!tem_livros_cadastrados(&minha_biblioteca))
                 break;
 
             int id = digitar_id();
 
-            if (remover_livro(&minha_biblioteca, id) == SUCESSO)
-            {
-                printf("Operacao realizada com sucesso!\n");
-            }
+            remover_livro(&minha_biblioteca, id);
             break;
 
-        case 7: //sair do sistema
+        case 8: //sair do sistema
             printf("Saindo do sistema.\n");
             break;
 
@@ -170,10 +191,11 @@ void imprimir_menu()
     printf("1- Adicionar livros\n");
     printf("2- Listar livros\n");
     printf("3- Buscar por Id\n");
-    printf("4- Emprestar livro\n");
-    printf("5- Devolver livro\n");
-    printf("6- Remover livro\n");
-    printf("7- Sair do sistema\n");
+    printf("4- Buscar por titulo\n");
+    printf("5- Emprestar livro\n");
+    printf("6- Devolver livro\n");
+    printf("7- Remover livro\n");
+    printf("8- Sair do sistema\n");
     printf("\n");
 }
 
@@ -248,15 +270,10 @@ void adicionar_livro(Biblioteca *b)
         }
         else if(b->livros[proximo_indice].disponivel != 1 && b->livros[proximo_indice].disponivel != 0)
         {
-            printf("ERRO: Digite apenas (1 - sim, 0 - nao)!\n");
+            printf("ERRO: Digite apenas (1 - sim, 0 - nao)!\n"); 
             b->livros[proximo_indice].disponivel = -1;
         }
-    } while (b->livros[proximo_indice].disponivel == -1);
-
-
-    printf("Digite se o livro esta disponivel: (1 - sim, 0 - nao)\n");
-    fgets(buffer, sizeof(buffer), stdin);
-    b->livros[proximo_indice].disponivel = (int)strtol(buffer, NULL, 10);  
+    } while (b->livros[proximo_indice].disponivel == -1); 
 
     printf("Livro adicionado com sucesso!\n");
 }
@@ -299,7 +316,26 @@ Livro *buscar_por_id(Biblioteca *b, int id)
         {
             return &b->livros[i];
         }
-  }
+    }
+
+    return NULL;
+}
+
+Livro *buscar_por_titulo(Biblioteca *b)
+{
+    char titulo_procurado[100];
+
+    printf("Digite o titulo do livro: \n");
+    fgets(titulo_procurado, sizeof(titulo_procurado), stdin);
+    titulo_procurado[strcspn(titulo_procurado, "\n")] = '\0';  // remove o \n do final
+
+     for (int i = 0; i < b->total_livros; i++)
+    {
+        if(strcmp(titulo_procurado, b->livros[i].titulo) == 0)
+        {
+            return &b->livros[i];
+        }
+    }
 
     return NULL;
 }
