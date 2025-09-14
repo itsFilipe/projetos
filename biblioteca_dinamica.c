@@ -2,8 +2,10 @@
 #include <string.h>
 #include <stdlib.h>
 
-/*agora quero funcao para buscar por nome do livro, depois criar arquivo, depois disso tudo vou separar
-em livraria de codigos para deixar mais organizado, e também quero verificar todos possiveis erros*/
+/*agora quero funcao para buscar por nome do livro(SIMPLES MAS OK), depois criar arquivo(ok), 
+quero criar para ler de arquivo, salvar em binario tb,
+depois disso tudo vou separar em biblioteca de codigos para deixar mais organizado,
+e também quero verificar todos possiveis erros*/
 
 #define DISPONIVEL 1
 #define EMPRESTADO 0
@@ -36,6 +38,7 @@ typedef struct
 
 int inicializar_biblioteca(Biblioteca *b);
 void imprimir_menu();
+void menu_switch(Biblioteca *b, int escolha_usuario);
 void adicionar_livro(Biblioteca *b);
 void print_livro(Livro *livro);
 int inicializar_biblioteca(Biblioteca *b);
@@ -48,11 +51,11 @@ int digitar_id();
 int remover_livro(Biblioteca *b, int id);
 int confirmar_operacao();
 void finalizar_biblioteca(Biblioteca *b);
+void salvar_em_arquivo(Biblioteca *b);
 
 int main()
 {   
     Biblioteca minha_biblioteca;
-    Livro *livro_encontrado = NULL;
 
     if(inicializar_biblioteca(&minha_biblioteca) == SUCESSO)
     {
@@ -67,7 +70,7 @@ int main()
     char buffer[100];
     int opcao = 0;
 
-    while (opcao != 8)
+    while (opcao != 9)
     {
         imprimir_menu();
 
@@ -75,90 +78,7 @@ int main()
         fgets(buffer, sizeof(buffer), stdin);
         opcao = (int)strtol(buffer, NULL, 10);  // converte string -> int
 
-        switch (opcao)
-        {
-        case 1: //add livro
-            adicionar_livro(&minha_biblioteca);
-            break;
-
-        case 2: //listar livros
-            if (!tem_livros_cadastrados(&minha_biblioteca))
-                break;
-
-            for (int i = 0; i < minha_biblioteca.total_livros; i++)
-            {
-                print_livro(&minha_biblioteca.livros[i]);
-            }
-            break;
-
-        case 3: //buscar por id
-            if (!tem_livros_cadastrados(&minha_biblioteca))
-                break;
-
-            livro_encontrado = buscar_por_id(&minha_biblioteca, digitar_id());
-
-            if(livro_encontrado == NULL)
-            {
-                printf("Id nao encontrado.\n");
-            }
-            else
-            {
-                printf("Livro encontrado!\n");
-                print_livro(livro_encontrado);
-            }
-
-            break;
-
-        case 4: //buscar por nome do livro
-            if (!tem_livros_cadastrados(&minha_biblioteca))
-                break;
-
-            livro_encontrado = buscar_por_titulo(&minha_biblioteca);
-
-            if(livro_encontrado == NULL)
-            {
-                printf("Livro nao encontrado.\n");
-            }
-            else
-            {
-                printf("Livro encontrado!\n");
-                print_livro(livro_encontrado);
-            }
-            break;
-
-        case 5: //emprestar livro
-            if (!tem_livros_cadastrados(&minha_biblioteca))
-                break;
-
-            int id_emprestar = digitar_id();
-            emprestar_livro(&minha_biblioteca, id_emprestar);
-            break;
-
-        case 6: //devolver livro
-            if (!tem_livros_cadastrados(&minha_biblioteca))
-                break;
-
-            int id_devolver = digitar_id();
-            devolver_livro(&minha_biblioteca, id_devolver);
-            break;
-
-        case 7: //remover livro
-            if (!tem_livros_cadastrados(&minha_biblioteca))
-                break;
-
-            int id = digitar_id();
-
-            remover_livro(&minha_biblioteca, id);
-            break;
-
-        case 8: //sair do sistema
-            printf("Saindo do sistema.\n");
-            break;
-
-        default:
-            printf("Digite uma opcao valida.\n");
-            break;
-        }
+        menu_switch(&minha_biblioteca, opcao);
     }
 
     printf("Total de livros: %d\n", minha_biblioteca.total_livros);
@@ -195,8 +115,101 @@ void imprimir_menu()
     printf("5- Emprestar livro\n");
     printf("6- Devolver livro\n");
     printf("7- Remover livro\n");
-    printf("8- Sair do sistema\n");
+    printf("8- Salvar em arquivo\n");
+    printf("9- Sair do sistema\n");
     printf("\n");
+}
+
+void menu_switch(Biblioteca *b, int escolha_usuario)
+{
+    Livro *livro_encontrado = NULL;  // 
+
+    switch (escolha_usuario)
+    {
+        case 1: // adicionar livro
+            adicionar_livro(b);
+            break;
+
+        case 2: // listar livros
+            if (!tem_livros_cadastrados(b))
+                break;
+
+            for (int i = 0; i < b->total_livros; i++)
+            {
+                print_livro(&b->livros[i]);
+            }
+            break;
+
+        case 3: // buscar por id
+            if (!tem_livros_cadastrados(b))
+                break;
+
+            livro_encontrado = buscar_por_id(b, digitar_id());
+
+            if(livro_encontrado == NULL)
+            {
+                printf("Id nao encontrado.\n");
+            }
+            else
+            {
+                printf("Livro encontrado!\n");
+                print_livro(livro_encontrado);
+            }
+            break;
+
+        case 4: // buscar por titulo
+            if (!tem_livros_cadastrados(b))
+                break;
+
+            livro_encontrado = buscar_por_titulo(b);
+
+            if(livro_encontrado == NULL)
+            {
+                printf("Livro nao encontrado.\n");
+            }
+            else
+            {
+                printf("Livro encontrado!\n");
+                print_livro(livro_encontrado);
+            }
+            break;
+
+        case 5: // emprestar livro
+            if (!tem_livros_cadastrados(b))
+                break;
+
+            emprestar_livro(b, digitar_id());
+            break;
+
+        case 6: // devolver livro
+            if (!tem_livros_cadastrados(b))
+                break;
+
+            devolver_livro(b, digitar_id());
+            break;
+
+        case 7: // remover livro
+            if (!tem_livros_cadastrados(b))
+                break;
+
+            remover_livro(b, digitar_id());
+            break;
+
+        case 8: // salvar em arquivo
+            if (!tem_livros_cadastrados(b))
+                break;
+
+            salvar_em_arquivo(b);
+            break;
+
+        case 9: // sair do sistema
+            printf("Saindo do sistema.\n");
+            break;
+
+        default:
+            printf("Digite uma opcao valida.\n");
+            break;
+    }
 }
 
 int digitar_id()
@@ -477,3 +490,29 @@ void finalizar_biblioteca(Biblioteca *b)
     b->total_livros = 0;       
     b->capacidade = 0;
 }
+
+void salvar_em_arquivo(Biblioteca *b)
+{
+    FILE *arquivo = fopen("lista_livros.txt", "w");
+    if(arquivo)
+    {
+         for (int i = 0; i < b->total_livros; i++)
+        {
+            fprintf(arquivo, "Id: %d\n", b->livros[i].id);
+            fprintf(arquivo, "Titulo: %s\n", b->livros[i].titulo);
+            fprintf(arquivo, "Autor: %s\n", b->livros[i].autor);
+            fprintf(arquivo, "Ano: %d\n", b->livros[i].ano);
+            fprintf(arquivo, "Disponivel: %s\n",
+                    b->livros[i].disponivel == DISPONIVEL ? "Sim" : "Nao");
+            fprintf(arquivo, "----------------------------\n");
+         }
+        
+        fclose(arquivo);
+        printf("Todos os livros foram salvos no arquivo!\n");
+    }
+    else
+    {
+        printf("ERRO: nao foi possivel abrir o arquivo.\n");
+    }
+}
+
